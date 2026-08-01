@@ -1,637 +1,972 @@
 <!DOCTYPE html>
-<html lang="sw">
+<html lang="sw" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KISHAMAPANDA PRIMARY SCHOOL SMS PORTAL</title>
+    <title>Kishamapanda Primary School Sms Portal</title>
     
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { DEFAULT: '#166534', dark: '#14532d', light: '#15803d' }, 
+                        secondary: { DEFAULT: '#facc15', dark: '#eab308', light: '#fde047' },
+                        accent: '#ca8a04' 
+                    }
+                }
+            }
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- DataTables & AOS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    
+    <!-- Firebase JS SDK (v8 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
     <style>
-        :root {
-            --primary-orange: #FF8C00;
-            --primary-blue: #1565C0;
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-            --glass-bg: rgba(255, 255, 255, 0.8);
-            --glass-border: rgba(255, 255, 255, 0.4);
-            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            overflow-x: hidden;
-            background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
-        }
-
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow);
-            border-radius: 15px;
-        }
-
-        .hidden { display: none !important; }
-
-        /* Auth Pages */
-        #login-page {
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, var(--primary-blue), var(--primary-orange));
-        }
-
-        .login-box {
-            padding: 40px; width: 100%; max-width: 450px; text-align: center;
-            background: rgba(255, 255, 255, 0.95); border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        }
-
-        .login-box h2 { color: var(--primary-blue); margin-top: 10px; }
-        .login-box p { color: var(--primary-orange); font-weight: 500; margin-bottom: 25px; }
-
-        .auth-toggle {
-            display: flex; margin-bottom: 20px; border-radius: 8px; border: 1px solid var(--primary-blue); overflow: hidden;
-        }
-        .auth-toggle button {
-            flex: 1; padding: 10px; border: none; background: transparent; color: var(--primary-blue); font-weight: 600; cursor: pointer; transition: 0.3s;
-        }
-        .auth-toggle button.active { background: var(--primary-blue); color: white; }
-
-        .input-group { position: relative; margin-bottom: 20px; }
-        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--primary-blue); }
-        .input-group input, select, textarea {
-            width: 100%; padding: 12px 12px 12px 45px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-size: 14px; background: rgba(255,255,255,0.8);
-        }
-        select, textarea { padding-left: 15px; }
-
-        .btn-primary {
-            width: 100%; padding: 12px; background: var(--primary-blue); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px; transition: 0.3s;
-        }
-        .btn-primary:hover { background: var(--primary-orange); box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4); }
-        .btn-secondary { padding: 12px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; }
-
-        /* App Layout */
-        #app-wrapper { display: flex; height: 100vh; overflow: hidden; }
-
-        .sidebar { width: 260px; height: 100vh; padding: 20px 0; position: fixed; z-index: 100; border-right: 1px solid var(--glass-border); background: rgba(255,255,255,0.9); }
-        .sidebar-header { text-align: center; margin-bottom: 30px; border-bottom: 1px solid #ddd; padding-bottom: 15px; }
-        .sidebar-header h3 { color: var(--primary-blue); font-size: 1.2rem; }
-        .sidebar-header span { color: var(--primary-orange); font-size: 0.9rem; }
-        
-        .nav-links { list-style: none; }
-        .nav-links li a { display: flex; align-items: center; gap: 15px; padding: 15px 25px; text-decoration: none; color: var(--text-color); font-weight: 500; transition: 0.3s; }
-        .nav-links li a i { width: 20px; color: var(--primary-blue); }
-        .nav-links li a:hover, .nav-links li a.active { background: linear-gradient(90deg, rgba(21,101,192,0.1) 0%, transparent 100%); border-left: 4px solid var(--primary-orange); color: var(--primary-blue); }
-
-        .main-content { margin-left: 260px; width: calc(100% - 260px); height: 100vh; overflow-y: auto; padding: 20px 20px 70px 20px; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; margin-bottom: 25px; }
-        .topbar button { background: none; border: none; font-size: 1.5rem; color: var(--primary-blue); cursor: pointer;}
-        .user-profile { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--primary-blue); }
-
-        .view-section { display: none; animation: fadeIn 0.4s ease; }
-        .view-section.active-view { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .page-title { color: var(--primary-blue); margin-bottom: 20px; border-bottom: 2px solid var(--primary-orange); display: inline-block; padding-bottom: 5px; }
-
-        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-        .card { padding: 25px; display: flex; align-items: center; gap: 20px; border-top: 4px solid var(--primary-blue); }
-        .card:nth-child(even) { border-top: 4px solid var(--primary-orange); }
-        .card i { font-size: 2.8rem; color: var(--primary-orange); opacity: 0.8; }
-        .card h3 { font-size: 1rem; color: #555; }
-        .card p { font-size: 1.8rem; font-weight: 700; color: var(--primary-blue); }
-
-        .form-container, .table-container, .sms-container { padding: 25px; margin-bottom: 25px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .form-actions { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-primary.small { padding: 5px 8px; font-size: 12px; width: auto; }
-        .btn-secondary.small { padding: 5px 8px; font-size: 12px; width: auto; background: #17a2b8; color: white; border: none; border-radius: 5px; cursor: pointer; display: inline-block; text-decoration: none; }
-        .btn-success.small { padding: 5px 8px; font-size: 12px; width: auto; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; display: inline-block; text-decoration: none; }
-        .btn-danger { background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 5px; cursor: pointer; }
-
-        .app-footer { position: fixed; bottom: 0; left: 260px; width: calc(100% - 260px); text-align: center; padding: 12px; background: var(--primary-blue); color: white; font-size: 14px; z-index: 1000; }
-
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); transition: 0.3s; }
-            .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0; width: 100%; }
-            .app-footer { left: 0; width: 100%; }
-            #menuToggle { display: block; }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        .dark .glass { background: rgba(17, 24, 39, 0.9); backdrop-filter: blur(10px); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #166534; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #15803d; }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-800 dark:bg-gray-950 dark:text-gray-100 transition-colors duration-300 antialiased min-h-screen flex flex-col">
 
-    <!-- ========================
-         LOGIN & SIGNUP PAGE
-         ======================== -->
-    <div id="login-page" class="view-section active-view glass-panel">
-        <div class="login-box" data-aos="zoom-in">
-            <i class="fas fa-graduation-cap fa-4x" style="color: var(--primary-orange)"></i>
-            <h2>KISHAMAPANDA</h2>
-            <p>PRIMARY SCHOOL SMS PORTAL</p>
-            
-            <div class="auth-toggle">
-                <button id="toggleLoginBtn" class="active">Kuingia</button>
-                <button id="toggleSignupBtn">Kujisajili</button>
-            </div>
-
-            <!-- Login Form -->
-            <form id="loginForm">
-                <div class="input-group">
-                    <i class="fas fa-envelope"></i>
-                    <input type="email" id="loginEmail" placeholder="Barua Pepe (Email ya Kiongozi)" required>
-                </div>
-                <div class="input-group">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" id="loginPassword" placeholder="Nenosiri (Password)" required>
-                </div>
-                <button type="submit" class="btn-primary" id="loginBtn">Karibu kwenye Mfumo</button>
-            </form>
-
-            <!-- Signup Form -->
-            <form id="signupForm" class="hidden">
-                <div class="input-group">
-                    <i class="fas fa-user"></i>
-                    <input type="text" id="signupName" placeholder="Jina Kamili la Kiongozi" required>
-                </div>
-                <div class="input-group">
-                    <i class="fas fa-envelope"></i>
-                    <input type="email" id="signupEmail" placeholder="Barua Pepe (Email)" required>
-                </div>
-                <div class="input-group">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" id="signupPassword" placeholder="Nenosiri (Angalau herufi 6)" required>
-                </div>
-                <button type="submit" class="btn-primary" id="signupBtn">Tengeneza Akaunti</button>
-            </form>
+    <!-- LOADER -->
+    <div id="loader" class="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-gray-950 transition-opacity duration-500">
+        <div class="flex flex-col items-center">
+            <div class="w-16 h-16 border-4 border-secondary border-t-primary rounded-full animate-spin"></div>
+            <p class="mt-4 text-lg font-semibold animate-pulse text-primary dark:text-secondary">Kishamapanda Primary...</p>
         </div>
     </div>
 
-    <!-- ========================
-         MAIN APP WRAPPER
-         ======================== -->
-    <div id="app-wrapper" class="hidden">
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <!-- MAIN WRAPPER -->
+    <div class="flex-grow flex flex-col md:flex-row min-h-screen pt-16">
         
-        <!-- SIDEBAR -->
-        <nav class="sidebar glass-panel" id="sidebar">
-            <div class="sidebar-header">
-                <h3>KISHAMAPANDA</h3>
-                <span>SMS Portal</span>
+        <!-- HEADER -->
+        <header class="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-40 transition-colors shadow-sm px-4 flex items-center justify-between glass">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-600 dark:text-gray-300 text-xl p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md">
+                        <i class="fas fa-school text-secondary text-lg"></i>
+                    </div>
+                    <h1 class="font-bold text-lg md:text-xl tracking-tight hidden sm:block">Kishamapanda Primary <span class="text-primary dark:text-secondary font-medium">SMS Portal</span></h1>
+                    <h1 class="font-bold text-lg tracking-tight sm:hidden">Kishamapanda</h1>
+                </div>
             </div>
-            <ul class="nav-links">
-                <li><a href="#" data-target="dashboard-view" class="active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="#" data-target="registration-view"><i class="fas fa-id-card"></i> Usajili wa Shule</a></li>
-                <li><a href="#" data-target="sms-view"><i class="fas fa-comment-sms"></i> Bulk SMS</a></li>
-                <li><a href="#" data-target="reports-view"><i class="fas fa-file-pdf"></i> Reports</a></li>
-                <li><a href="#" data-target="settings-view"><i class="fas fa-cog"></i> Settings</a></li>
-                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-            </ul>
-        </nav>
+
+            <div class="flex items-center gap-3 flex-grow max-w-xl mx-4 hidden md:block">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input type="text" id="global-search" oninput="globalSearch(this.value)" placeholder="Tafuta jina, simu, darasa..." class="w-full pl-11 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-full focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-gray-900 transition">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-secondary transition border border-gray-100 dark:border-gray-700">
+                    <i id="theme-icon" class="fas fa-moon"></i>
+                </button>
+                
+                <div class="flex items-center gap-2.5 p-1.5 px-3 rounded-full bg-primary/10 border border-primary/20 text-primary">
+                    <i class="fas fa-user-shield text-xs"></i>
+                    <span class="text-sm font-semibold">Anonymous Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 md:sticky md:top-16 z-30 w-64 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 transition-transform duration-300 flex flex-col justify-between h-[calc(100vh-4rem)]">
+            <div class="p-4 flex-grow overflow-y-auto space-y-8">
+                <nav class="space-y-2">
+                    <p class="px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Menu Kuu</p>
+                    <button onclick="switchTab('dashboard')" class="tab-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 bg-primary text-white shadow-md shadow-primary/20" id="btn-dashboard">
+                        <i class="fas fa-chart-line w-5 text-secondary"></i> Dashboard
+                    </button>
+                    <button onclick="switchTab('washirika')" class="tab-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium text-sm text-gray-600 dark:text-gray-300 hover:bg-primary/5 hover:text-primary dark:hover:bg-primary/10 dark:hover:text-secondary transition-all" id="btn-washirika">
+                        <i class="fas fa-users w-5"></i> Orodha (Wazazi/Staff)
+                    </button>
+                    <button onclick="switchTab('bulksms')" class="tab-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium text-sm text-gray-600 dark:text-gray-300 hover:bg-primary/5 hover:text-primary dark:hover:bg-primary/10 dark:hover:text-secondary transition-all" id="btn-bulksms">
+                        <i class="fas fa-paper-plane w-5"></i> Tuma SMS
+                    </button>
+                </nav>
+                
+                <nav class="space-y-2">
+                    <p class="px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Mfumo</p>
+                    <button onclick="switchTab('settings')" class="tab-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium text-sm text-gray-600 dark:text-gray-300 hover:bg-primary/5 hover:text-primary transition-all" id="btn-settings">
+                        <i class="fas fa-sliders-h w-5"></i> Mipangilio
+                    </button>
+                    <button onclick="switchTab('about')" class="tab-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium text-sm text-gray-600 dark:text-gray-300 hover:bg-primary/5 hover:text-primary transition-all" id="btn-about">
+                        <i class="fas fa-info-circle w-5"></i> Kuhusu
+                    </button>
+                </nav>
+            </div>
+            
+            <div class="p-4 border-t dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 text-center m-3 rounded-2xl border dark:border-gray-800">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Database Sync</p>
+                <div id="sync-status-indicator" class="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold mt-2 bg-emerald-50 dark:bg-emerald-950 p-2 rounded-lg">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    Kishamapanda DB
+                </div>
+            </div>
+        </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="main-content" id="mainContent">
-            <!-- Topbar -->
-            <header class="topbar glass-panel">
-                <button id="menuToggle"><i class="fas fa-bars"></i></button>
-                <div class="user-profile">
-                    <span id="currentUserDisplay">Kiongozi</span>
-                    <i class="fas fa-user-circle fa-2x"></i>
+        <main class="flex-grow p-4 md:p-8 space-y-8 overflow-x-hidden" id="app-content">
+            
+            <!-- DASHBOARD TAB -->
+            <section id="tab-dashboard" class="tab-content space-y-8 animate-fadeIn">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-6 bg-white dark:bg-gray-900 rounded-3xl shadow-sm border dark:border-gray-800">
+                    <div>
+                        <h2 class="text-3xl font-extrabold tracking-tighter text-gray-950 dark:text-white">Muhtasari</h2>
+                        <p class="text-gray-500 dark:text-gray-400 mt-1">Takwimu za usajili za Kishamapanda Primary School.</p>
+                    </div>
+                    <div class="flex items-center gap-2.5 bg-gray-50 dark:bg-gray-800 px-4 py-2 rounded-full border dark:border-gray-700 text-sm font-medium">
+                        <i class="far fa-calendar-alt text-primary dark:text-secondary"></i> <span id="current-date-el"></span>
+                    </div>
                 </div>
-            </header>
 
-            <!-- 1. DASHBOARD VIEW -->
-            <section id="dashboard-view" class="view-section active-view">
-                <h2 class="page-title">Dashboard Overview</h2>
-                <div class="cards-grid">
-                    <div class="card glass-panel" data-aos="fade-up">
-                        <i class="fas fa-user-graduate"></i>
-                        <div><h3>Wanafunzi</h3><p id="count-students">0</p></div>
+                <!-- STATS CARDS -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-sm border dark:border-gray-800 flex items-start gap-4 transform transition hover:scale-105 duration-300">
+                        <div class="p-3 bg-primary/10 rounded-2xl text-primary"><i class="fas fa-users text-2xl"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Jumla Zote</p>
+                            <h3 class="text-4xl font-black mt-1 tracking-tight" id="stat-total">0</h3>
+                            <p class="text-xs text-emerald-600 mt-1 font-medium bg-emerald-50 px-2 py-0.5 rounded-full inline-block"><i class="fas fa-check-circle mr-1"></i>Kwenye Mfumo</p>
+                        </div>
                     </div>
-                    <div class="card glass-panel" data-aos="fade-up" data-aos-delay="100">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                        <div><h3>Walimu</h3><p id="count-teachers">0</p></div>
+                    <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-sm border dark:border-gray-800 flex items-start gap-4 transform transition hover:scale-105 duration-300">
+                        <div class="p-3 bg-sky-100 dark:bg-sky-950 rounded-2xl text-sky-600"><i class="fas fa-mars text-2xl"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Wanaume (Me)</p>
+                            <h3 class="text-4xl font-black mt-1 tracking-tight" id="stat-me">0</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" id="pct-me">0% ya wote</p>
+                        </div>
                     </div>
-                    <div class="card glass-panel" data-aos="fade-up" data-aos-delay="200">
-                        <i class="fas fa-users"></i>
-                        <div><h3>Kamati & Wafanyakazi</h3><p id="count-committee">0</p></div>
+                    <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-sm border dark:border-gray-800 flex items-start gap-4 transform transition hover:scale-105 duration-300">
+                        <div class="p-3 bg-pink-100 dark:bg-pink-950 rounded-2xl text-pink-600"><i class="fas fa-venus text-2xl"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Wanawake (Ke)</p>
+                            <h3 class="text-4xl font-black mt-1 tracking-tight" id="stat-ke">0</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" id="pct-ke">0% ya wote</p>
+                        </div>
                     </div>
-                    <div class="card glass-panel" data-aos="fade-up" data-aos-delay="300">
-                        <i class="fas fa-paper-plane"></i>
-                        <div><h3>Jumla ya Waliosajiliwa</h3><p id="count-total">0</p></div>
+                    <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-sm border dark:border-gray-800 flex items-start gap-4 transform transition hover:scale-105 duration-300 overflow-hidden">
+                        <div class="p-3 bg-secondary/10 rounded-2xl text-accent"><i class="fas fa-layer-group text-2xl"></i></div>
+                        <div>
+                            <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Idara / Makundi</p>
+                            <h3 class="text-4xl font-black mt-1 tracking-tight">9</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">Madarasa, Kamati...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHARTS -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-sm border dark:border-gray-800 lg:col-span-1">
+                        <h4 class="text-lg font-bold mb-6 flex items-center gap-2.5"><i class="fas fa-chart-pie text-primary"></i> Mgawanyo wa Jinsia</h4>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="genderChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-sm border dark:border-gray-800 lg:col-span-2">
+                        <h4 class="text-lg font-bold mb-6 flex items-center gap-2.5"><i class="fas fa-chart-bar text-secondary"></i> Takwimu kwa Madarasa & Staff</h4>
+                        <div class="h-64 relative">
+                            <canvas id="deptChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- 2. UNIFIED REGISTRATION VIEW -->
-            <section id="registration-view" class="view-section">
-                <h2 class="page-title">Usajili - Wanafunzi, Walimu na Watumishi</h2>
-                <div class="form-container glass-panel">
-                    <form id="unifiedForm">
-                        <div class="form-grid">
-                            <input type="text" id="regName" placeholder="Jina Kamili (Mhusika/Mwanafunzi)" required>
-                            <input type="tel" id="regPhone" placeholder="Simu k.m 0757344860" required>
-                            
-                            <select id="regCategory" required>
-                                <option value="">Chagua Kundi...</option>
-                                <option value="Mwalimu">Mwalimu</option>
-                                <option value="Mwanakamati">Kamati ya Shule</option>
-                                <option value="Kamati ya Chakula">Kamati ya Chakula</option>
-                                <option value="Wapishi">Mpishi</option>
-                                <option value="Mlinzi">Mlinzi</option>
-                                <option value="Darasa la Awali">Mwanafunzi - Darasa la Awali</option>
-                                <option value="Darasa la Kwanza">Mwanafunzi - Darasa la Kwanza</option>
-                                <option value="Darasa la Pili">Mwanafunzi - Darasa la Pili</option>
-                                <option value="Darasa la Tatu">Mwanafunzi - Darasa la Tatu</option>
-                                <option value="Darasa la Nne">Mwanafunzi - Darasa la Nne</option>
-                                <option value="Darasa la Tano">Mwanafunzi - Darasa la Tano</option>
-                                <option value="Darasa la Sita">Mwanafunzi - Darasa la Sita</option>
-                                <option value="Darasa la Saba">Mwanafunzi - Darasa la Saba</option>
-                            </select>
+            <!-- WASHIRIKA TAB -->
+            <section id="tab-washirika" class="tab-content hidden space-y-8 animate-fadeIn">
+                <!-- FORM -->
+                <div class="bg-white dark:bg-gray-900 p-7 rounded-3xl shadow-sm border dark:border-gray-800">
+                    <div class="flex items-center justify-between border-b dark:border-gray-800 pb-4 mb-6">
+                        <h3 class="text-xl font-bold flex items-center gap-3" id="form-title"><i class="fas fa-user-plus text-primary dark:text-secondary"></i> Sajili Mtu Mpya</h3>
+                        <span class="text-sm bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full text-gray-600 dark:text-gray-300 font-mono" id="auto-id-display">ID: ---</span>
+                    </div>
 
-                            <select id="regGender" required>
-                                <option value="">Jinsi...</option>
-                                <option value="Me">Me</option><option value="Ke">Ke</option>
+                    <form id="member-form" onsubmit="saveMember(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <input type="hidden" id="form-mode" value="create">
+                        <input type="hidden" id="edit-id" value="">
+                        
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1.5 ml-1 tracking-wider">Majina Kamili <span class="text-rose-500">*</span></label>
+                            <input type="text" id="m-name" required class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary dark:focus:ring-secondary focus:border-transparent transition" placeholder="Mf. Juma Shabani">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1.5 ml-1 tracking-wider">Jinsi <span class="text-rose-500">*</span></label>
+                            <select id="m-gender" required class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary dark:focus:ring-secondary focus:border-transparent transition">
+                                <option value="" disabled selected>Chagua Jinsi</option>
+                                <option value="Me">Me (Mwanaume)</option>
+                                <option value="Ke">Ke (Mwanamke)</option>
                             </select>
                         </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn-primary" id="submitBtn" style="width: auto; padding: 10px 30px;">Hifadhi (save))</button>
-                            <button type="reset" class="btn-secondary">Futa (Reset)</button>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1.5 ml-1 tracking-wider">Namba ya Simu <span class="text-rose-500">*</span></label>
+                            <input type="tel" id="m-phone" required class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary dark:focus:ring-secondary focus:border-transparent transition font-mono" placeholder="Mf. 0752XXXXXX">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1.5 ml-1 tracking-wider">Idara / Darasa <span class="text-rose-500">*</span></label>
+                            <select id="m-dept" required class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary dark:focus:ring-secondary focus:border-transparent transition">
+                                <option value="" disabled selected>Chagua Idara/Darasa</option>
+                                <option value="Staff Member">Staff Member</option>
+                                <option value="Wajumbe wa Kamati ya Shule">Wajumbe wa Kamati ya Shule</option>
+                                <option value="Wazazi Darasa la Kwanza">Wazazi Darasa la Kwanza</option>
+                                <option value="Darasa la Pili">Darasa la Pili</option>
+                                <option value="Darasa la Tatu">Darasa la Tatu</option>
+                                <option value="Darasa la Nne">Darasa la Nne</option>
+                                <option value="Darasa la Tano">Darasa la Tano</option>
+                                <option value="Darasa la Sita">Darasa la Sita</option>
+                                <option value="Darasa la Saba">Darasa la Saba</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1.5 ml-1 tracking-wider">Hali (Status) <span class="text-rose-500">*</span></label>
+                            <select id="m-status" required class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary dark:focus:ring-secondary focus:border-transparent transition">
+                                <option value="Active" selected>Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+
+                        <div class="lg:col-span-1 flex items-end gap-3 justify-end mt-2">
+                            <button type="button" onclick="resetForm()" class="px-5 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-xs font-semibold rounded-xl transition flex items-center gap-2"><i class="fas fa-undo"></i> Reset</button>
+                            <button type="submit" class="px-6 py-3 bg-gradient-to-r from-primary to-primary-light text-white text-xs font-bold rounded-xl shadow hover:shadow-primary/30 transition flex items-center gap-2" id="btn-submit-form"><i class="fas fa-save"></i> Hifadhi</button>
                         </div>
                     </form>
                 </div>
-                
-                <div class="table-container glass-panel">
-                    <table id="unifiedTable" class="display responsive nowrap" style="width:100%">
-                        <thead>
-                            <tr><th>Jina Kamili</th><th>Kundi / Darasa</th><th>Jinsi</th><th>Simu Namba</th><th>Ameandikishwa na</th><th>Actions</th></tr>
-                        </thead>
-                        <tbody id="unifiedTableBody">
-                            <!-- Data zitaletwa moja kwa moja kutoka Firestore -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
 
-            <!-- 3. BULK SMS VIEW (Yenye Filters Kutoka Firebase) -->
-            <section id="sms-view" class="view-section">
-                <h2 class="page-title">Tuma Bulk SMS (Filters)</h2>
-                <div class="sms-container glass-panel">
-                    <div class="form-grid">
-                        <select id="smsTarget">
-                            <option value="all">Wote Waliosajiliwa Shuleni</option>
-                            <option value="walimu">Walimu Wote</option>
-                            <option value="kamati">Kamati ya Shule</option>
-                            <option value="Kamati ya Chakula">Kamati ya Chakula</option>
-                            <option value="Wapishi">Mpishi</option>
-                            <option value="Mlinzi">Mlinzi</option>
-                            <option value="Darasa la Awali">Wazazi - Darasa la Awali</option>
-                            <option value="Darasa la Kwanza">Wazazi - Darasa la Kwanza</option>
-                            <option value="Darasa la Pili">Wazazi - Darasa la Pili</option>
-                            <option value="Darasa la Tatu">Wazazi - Darasa la Tatu</option>
-                            <option value="Darasa la Nne">Wazazi - Darasa la Nne</option>
-                            <option value="Darasa la Tano">Wazazi - Darasa la Tano</option>
-                            <option value="Darasa la Sita">Wazazi - Darasa la Sita</option>
-                            <option value="Darasa la Saba">Wazazi - Darasa la Saba</option>
-                        </select>
+                <!-- TABLE -->
+                <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-sm border dark:border-gray-800 overflow-hidden">
+                    <div class="p-5 border-b dark:border-gray-800 flex items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/50">
+                        <h3 class="font-bold text-lg">Orodha ya Wazazi na Staff</h3>
+                        <div class="text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full border dark:border-gray-700" id="table-count-display">Jumla: 0</div>
                     </div>
-                    <div style="margin-top: 15px;">
-                        <textarea id="smsMessage" rows="5" placeholder="Andika ujumbe wako hapa..." required></textarea>
-                        <p style="text-align: right; font-size: 12px; color: #666;">
-                            Characters: <span id="charCount" style="font-weight: bold; color: var(--primary-blue);">0</span>/160
-                        </p>
-                    </div>
-                    <div class="form-actions" style="margin-top: 15px;">
-                        <button id="sendSmsBtn" class="btn-primary"><i class="fas fa-paper-plane"></i> Chuja Namba na Tuma SMS</button>
-                    </div>
-                    <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; color: #0d47a1; border-left: 4px solid var(--primary-blue); border-radius: 4px;">
-                        <i class="fas fa-info-circle"></i> Mfumo utachuja namba za simu kulingana na kundi ulilochagua na kufungua App ya SMS ya simu yako."Kishamapanda Primary School tunajivunia ubora"
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-gray-50 dark:bg-gray-800 text-xs uppercase text-gray-500 dark:text-gray-400 tracking-wider">
+                                <tr>
+                                    <th class="px-5 py-4">ID</th>
+                                    <th class="px-5 py-4">Majina</th>
+                                    <th class="px-5 py-4">Jinsi</th>
+                                    <th class="px-5 py-4">Simu</th>
+                                    <th class="px-5 py-4">Idara / Darasa</th>
+                                    <th class="px-5 py-4">Status</th>
+                                    <th class="px-5 py-4 text-center">Vitendo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="members-table-body" class="divide-y dark:divide-gray-800">
+                                <!-- Data itakuja hapa -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
 
-            <section id="reports-view" class="view-section"><h2 class="page-title">Reports</h2><div class="glass-panel" style="padding: 20px;">Ripoti za jumla za mfumo.</div></section>
-            <section id="settings-view" class="view-section"><h2 class="page-title">Settings</h2><div class="glass-panel" style="padding: 20px;">Mipangilio ya Firebase Database.</div></section>
+            <!-- BULK SMS TAB -->
+            <section id="tab-bulksms" class="tab-content hidden space-y-8 animate-fadeIn">
+                <div class="bg-white dark:bg-gray-900 p-6 md:p-8 rounded-3xl shadow-sm border dark:border-gray-800 space-y-6 border-t-4 border-secondary">
+                    <h3 class="font-bold text-xl flex items-center gap-3 text-primary-dark dark:text-secondary"><i class="fas fa-paper-plane"></i> Tuma Ujumbe wa Kikundi (Bulk SMS)</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1.5 ml-1 tracking-wider">Chuja kwa Darasa / Kikundi</label>
+                            <select id="sms-filter-group" onchange="updateSmsRecipientCount()" class="w-full px-4 py-3 border dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-primary dark:focus:ring-secondary transition">
+                                <option value="all">Makundi Yote</option>
+                                <option value="Staff Member">Staff Member</option>
+                                <option value="Wajumbe wa Kamati ya Shule">Wajumbe wa Kamati ya Shule</option>
+                                <option value="Wazazi Darasa la Kwanza">Wazazi Darasa la Kwanza</option>
+                                <option value="Darasa la Pili">Darasa la Pili</option>
+                                <option value="Darasa la Tatu">Darasa la Tatu</option>
+                                <option value="Darasa la Nne">Darasa la Nne</option>
+                                <option value="Darasa la Tano">Darasa la Tano</option>
+                                <option value="Darasa la Sita">Darasa la Sita</option>
+                                <option value="Darasa la Saba">Darasa la Saba</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1.5 ml-1 tracking-wider">Mifano ya Ujumbe (Templates)</label>
+                            <select id="sms-template-select" onchange="applySmsTemplate(this.value)" class="w-full px-4 py-3 border dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-primary dark:focus:ring-secondary transition text-sm">
+                                <option value="">-- Chagua Template --</option>
+                                <option value="Habari Mzazi/Mlezi, tunakukumbusha kuhusu kikao cha wazazi kitakachofanyika shuleni Kishamapanda siku ya Ijumaa saa 4:00 Asubuhi. Kuhudhuria ni muhimu.">Mwaliko Kikao cha Wazazi</option>
+                                <option value="Taarifa kwa Walimu: Kikao cha dharura cha Staff kitafanyika leo saa 8:00 mchana ofisini kwa Mwalimu Mkuu. - Uongozi Kishamapanda.">Kikao cha Staff</option>
+                                <option value="Mpendwa Mzazi, tunakumbusha kufuatilia maendeleo ya mwanafunzi na kukagua madaftari yake mara kwa mara. - Kishamapanda Primary">Ufuatiliaji Maendeleo</option>
+                            </select>
+                        </div>
+                    </div>
 
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1.5 ml-1 tracking-wider">Ujumbe Wako</label>
+                        <textarea id="sms-message" rows="6" class="w-full p-4 border dark:border-gray-700 rounded-2xl bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-primary dark:focus:ring-secondary transition text-sm" placeholder="Andika ujumbe wako hapa kisha chagua kundi la kutuma..."></textarea>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 p-5 bg-gray-50 dark:bg-gray-800 rounded-2xl border dark:border-gray-700">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center text-accent border border-secondary/20">
+                                <i class="fas fa-envelope-open-text text-xl"></i>
+                            </div>
+                            <div>
+                                <span id="sms-recipient-count" class="text-2xl font-black text-gray-950 dark:text-white">0</span>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Watu watakaopokea SMS</p>
+                            </div>
+                        </div>
+                        <button onclick="triggerFilteredBulkSms()" class="w-full sm:w-auto px-8 py-3.5 bg-primary hover:bg-primary-light text-white font-bold rounded-xl shadow-lg hover:shadow-primary/30 transition flex items-center justify-center gap-2.5 transform hover:-translate-y-0.5">
+                            <i class="fas fa-paper-plane text-secondary"></i> Tuma SMS Sasa
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SETTINGS TAB -->
+            <section id="tab-settings" class="tab-content hidden space-y-8 animate-fadeIn">
+                <div class="bg-white dark:bg-gray-900 p-6 md:p-8 rounded-3xl shadow-sm border dark:border-gray-800">
+                    <h2 class="text-2xl font-bold flex items-center gap-3 mb-6"><i class="fas fa-cog text-gray-400"></i> Mipangilio ya Mfumo</h2>
+                    
+                    <div class="space-y-6">
+                        <div class="p-5 bg-gray-50 dark:bg-gray-800 rounded-2xl border dark:border-gray-700">
+                            <h3 class="font-bold text-base flex items-center gap-2.5 mb-3 text-amber-600"><i class="fas fa-database"></i> Usimamizi wa Data</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Pakua nakala ya data zako zote (Backup) au futa data ili kuanza upya. Kitendo hiki hakiwezi kubatilishwa.</p>
+                            <div class="flex flex-wrap gap-3">
+                                <button onclick="backupDatabase()" class="px-5 py-2.5 bg-white dark:bg-gray-700 border dark:border-gray-600 text-gray-700 dark:text-gray-200 text-xs font-semibold rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition flex items-center gap-2"><i class="fas fa-download text-primary"></i> Export JSON</button>
+                                <button onclick="clearAllDataDatabase()" class="px-5 py-2.5 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-lg hover:bg-rose-100 dark:hover:bg-rose-950 transition flex items-center gap-2 border border-rose-200 dark:border-rose-800"><i class="fas fa-trash-alt"></i> Futa Data Zote</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ABOUT TAB -->
+            <section id="tab-about" class="tab-content hidden animate-fadeIn space-y-8">
+                <div class="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-sm border dark:border-gray-800 text-center space-y-5 max-w-2xl mx-auto border-b-4 border-primary">
+                    <div class="w-24 h-24 bg-primary rounded-full flex items-center justify-center mx-auto shadow-xl border-4 border-white dark:border-gray-800">
+                        <i class="fas fa-graduation-cap text-secondary text-4xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-black tracking-tighter text-gray-950 dark:text-white">Kishamapanda Primary <span class="text-primary dark:text-secondary font-light">SMS Portal</span></h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">Mfumo rasmi na salama wa kusajili wazazi na wafanyakazi wa shule, kuratibu makundi, na kurahisisha mawasiliano ya shule kupitia ujumbe mfupi (SMS). Umejengwa kuhakikisha ufanisi katika uendeshaji.</p>
+                    <div class="pt-5 border-t dark:border-gray-800 space-y-2">
+                        <p class="text-sm font-semibold text-primary-dark dark:text-secondary">Shule ya Msingi Kishamapanda</p>
+                        <p class="text-xs text-gray-400 font-mono mt-1">V1.2 | Anonymous Cloud Access</p>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
-    <footer class="app-footer" id="footer">
-        <p>Mfumo huu umetengenezwa na Pastor Aloyce | Simu: 0757344860</p>
+    <!-- FOOTER -->
+    <footer class="p-4 text-center text-xs text-gray-400 dark:border-gray-800 mt-auto bg-white dark:bg-gray-950 border-t">
+        &copy; 2026 Kishamapanda Primary School Sms Portal. Haki zote zimehifadhiwa.
     </footer>
 
-    <!-- SCRIPTS -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } 
-               from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, updateDoc } 
-               from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // Firebase Configuration[cite: 1]
+    <script>
+        // FIREBASE CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyCv01cdwWFqeDcvMAkILY3K4G8yKJWwL6k",
             authDomain: "pastoraloyce-3530f.firebaseapp.com",
             projectId: "pastoraloyce-3530f",
             storageBucket: "pastoraloyce-3530f.firebasestorage.app",
             messagingSenderId: "978341477941",
-            appId: "1:978341477941:web:289e3b0671f00e52907b7c",
-            measurementId: "G-XYK8ZL0JSJ"
+            appId: "1:978341477941:web:289e3b0671f00e52907b7c"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
 
-        AOS.init();
-        let unifiedTable = $('#unifiedTable').DataTable({ responsive: true });
-        let globalRecords = []; 
-        let editingId = null; // Kutambua kama tunahariri taarifa fulani
+        // Local State
+        let members = [];
+        let gChart, dChart;
 
-        // Auth Toggle Logic
-        const loginForm = document.getElementById('loginForm');
-        const signupForm = document.getElementById('signupForm');
-        const toggleLoginBtn = document.getElementById('toggleLoginBtn');
-        const toggleSignupBtn = document.getElementById('toggleSignupBtn');
+        // --- INITIALIZATION & ANONYMOUS AUTH ---
 
-        toggleSignupBtn.addEventListener('click', () => {
-            loginForm.classList.add('hidden');
-            signupForm.classList.remove('hidden');
-            toggleLoginBtn.classList.remove('active');
-            toggleSignupBtn.classList.add('active');
-        });
-
-        toggleLoginBtn.addEventListener('click', () => {
-            signupForm.classList.add('hidden');
-            loginForm.classList.remove('hidden');
-            toggleSignupBtn.classList.remove('active');
-            toggleLoginBtn.classList.add('active');
-        });
-
-        // 1. SIGN UP (Kiongozi kujisajili)
-        signupForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('signupName').value;
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
-
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                alert("Akaunti imetengenezwa kikamilifu! Umeingia kwenye mfumo.");
-                signupForm.reset();
-            } catch (error) {
-                alert("Imeshindikana kusajili: " + error.message);
-            }
-        });
-
-        // 2. LOGIN (Kiongozi kuingia)
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                alert("Kosa wakati wa kuingia: Hakiki Email au Password yako.");
-            }
-        });
-
-        // 3. AUTH STATE LISTENER (Kufuatilia nani kaingia)
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('currentUserDisplay').innerText = user.email;
-                showApp();
-                listenToFirestoreData(); 
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('current-date-el').innerText = new Date().toLocaleDateString('sw-TZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            initCharts();
+            
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                updateThemeIcon(true);
             } else {
-                hideApp();
+                document.documentElement.classList.remove('dark');
+                updateThemeIcon(false);
             }
-        });
 
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            if(confirm("Je, una uhakika unataka kutoka?")) {
-                await signOut(auth);
-            }
-        });
-
-        function showApp() {
-            document.getElementById('login-page').classList.remove('active-view');
-            document.getElementById('login-page').classList.add('hidden');
-            document.getElementById('app-wrapper').classList.remove('hidden');
-        }
-
-        function hideApp() {
-            document.getElementById('login-page').classList.remove('hidden');
-            document.getElementById('login-page').classList.add('active-view');
-            document.getElementById('app-wrapper').classList.add('hidden');
-        }
-
-        // SPA Navigation
-        const navLinks = document.querySelectorAll('.nav-links a[data-target]');
-        const viewSections = document.querySelectorAll('.view-section');
-
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                navLinks.forEach(l => l.classList.remove('active'));
-                viewSections.forEach(v => v.classList.remove('active-view'));
-                
-                link.classList.add('active');
-                const targetId = link.getAttribute('data-target');
-                document.getElementById(targetId).classList.add('active-view');
-
-                if(window.innerWidth <= 768) {
-                    document.getElementById('sidebar').classList.remove('open');
-                }
-            });
-        });
-
-        document.getElementById('menuToggle').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.toggle('open');
-        });
-
-        // 4. UNIFIED REGISTRATION (Kuhifadhi au Kusasisha data Firestore)
-        const unifiedForm = document.getElementById('unifiedForm');
-        const submitBtn = document.getElementById('submitBtn');
-
-        unifiedForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('regName').value;
-            const phone = document.getElementById('regPhone').value;
-            const category = document.getElementById('regCategory').value;
-            const gender = document.getElementById('regGender').value;
-            const author = auth.currentUser ? auth.currentUser.email : "Admin";
-
-            try {
-                if (editingId) {
-                    // Sasisha (Update) taarifa zilizopo
-                    await updateDoc(doc(db, "school_registry", editingId), {
-                        name, phone, category, gender, updatedAt: new Date()
-                    });
-                    alert("Taarifa zimesasishwa kikamilifu!");
-                    editingId = null;
-                    submitBtn.innerText = "Hifadhi Kwenye Firebase";
-                } else {
-                    // Weka taarifa mpya (Add)
-                    await addDoc(collection(db, "school_registry"), {
-                        name, phone, category, gender, author, createdAt: new Date()
-                    });
-                    alert("Taarifa zimehifadhiwa kwenye Firebase Firestore kikamilifu!");
-                }
-                unifiedForm.reset();
-            } catch (error) {
-                alert("Imeshindikana kuhifadhi: " + error.message);
-            }
-        });
-
-        // 5. REAL-TIME FIRESTORE LISTENER (Kusoma na kusasisha taarifa zote moja kwa moja)
-        function listenToFirestoreData() {
-            onSnapshot(collection(db, "school_registry"), (snapshot) => {
-                unifiedTable.clear();
-                globalRecords = [];
-                
-                let teachersCount = 0;
-                let committeeCount = 0;
-                let studentsCount = 0;
-
-                snapshot.forEach((docSnap) => {
-                    let record = docSnap.data();
-                    record.id = docSnap.id;
-                    globalRecords.push(record);
-
-                    // Hesabu idadi kwa ajili ya Dashboard
-                    if (record.category === "Mwalimu") {
-                        teachersCount++;
-                    } else if (["Mwanakamati", "Kamati ya Chakula", "Wapishi", "Mlinzi"].includes(record.category)) {
-                        committeeCount++;
-                    } else {
-                        studentsCount++;
-                    }
-
-                    // Vifungo vya Action: Edit, Delete, Call, SMS
-                    let actionsHtml = `
-                        <div style="display: flex; gap: 4px;">
-                            <button class="btn-primary small" onclick="editRecord('${record.id}')" title="Hariri"><i class="fas fa-edit"></i></button>
-                            <button class="btn-danger small" onclick="deleteRecord('${record.id}')" title="Futa"><i class="fas fa-trash"></i></button>
-                            <a href="tel:${record.phone}" class="btn-secondary small" title="Piga Simu"><i class="fas fa-phone"></i></a>
-                            <a href="sms:${record.phone}" class="btn-success small" title="Tuma SMS"><i class="fas fa-sms"></i></a>
-                        </div>
-                    `;
-
-                    // Ongeza kwenye DataTable
-                    unifiedTable.row.add([
-                        record.name,
-                        record.category,
-                        record.gender,
-                        record.phone,
-                        record.author || "N/A",
-                        actionsHtml
-                    ]);
+            // Authenticate Anonymously with Firebase so Firestore works smoothly
+            setLoader(true, "Inaunganisha na Database...");
+            auth.signInAnonymously()
+                .then(() => {
+                    setupFirebaseListener();
+                })
+                .catch((error) => {
+                    console.error("Auth error:", error);
+                    showToast("Imeshindwa kuunganisha na mfumo wa usalama.", "error");
+                    setLoader(false);
                 });
+        });
 
-                unifiedTable.draw();
+        function setLoader(show, text = "Tafadhali subiri...") {
+            const loader = document.getElementById('loader');
+            const loaderText = loader.querySelector('p');
+            if(show) {
+                loaderText.innerText = text;
+                loader.classList.remove('hidden', 'opacity-0');
+            } else {
+                loader.classList.add('opacity-0');
+                setTimeout(() => loader.classList.add('hidden'), 500);
+            }
+        }
 
-                // Sasisha Dashboard Counters
-                document.getElementById('count-teachers').innerText = teachersCount;
-                document.getElementById('count-committee').innerText = committeeCount;
-                document.getElementById('count-students').innerText = studentsCount;
-                document.getElementById('count-total').innerText = snapshot.size;
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white', 'shadow-md', 'shadow-primary/20');
+                btn.classList.add('text-gray-600', 'dark:text-gray-300', 'hover:bg-primary/5', 'hover:text-primary');
+                const icon = btn.querySelector('i');
+                if(icon) icon.classList.remove('text-secondary');
+            });
+            
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            activeBtn.classList.add('bg-primary', 'text-white', 'shadow-md', 'shadow-primary/20');
+            activeBtn.classList.remove('text-gray-600', 'dark:text-gray-300', 'hover:bg-primary/5', 'hover:text-primary');
+            const activeIcon = activeBtn.querySelector('i');
+            if(activeIcon) activeIcon.classList.add('text-secondary');
+
+            if (tabId === 'dashboard') {
+                updateDashboardStats();
+            } else if (tabId === 'bulksms') {
+                updateSmsRecipientCount();
+            }
+            
+            if(window.innerWidth < 768) {
+                toggleSidebar(false);
+            }
+        }
+
+        function toggleSidebar(force) {
+            const sb = document.getElementById('sidebar');
+            if(force === false) {
+                sb.classList.add('-translate-x-full');
+            } else if(force === true) {
+                sb.classList.remove('-translate-x-full');
+            } else {
+                sb.classList.toggle('-translate-x-full');
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcon(isDark);
+            initCharts();
+            updateDashboardStats();
+        }
+
+        function updateThemeIcon(isDark) {
+            const icon = document.getElementById('theme-icon');
+            if (isDark) {
+                icon.className = "fas fa-sun";
+            } else {
+                icon.className = "fas fa-moon";
+            }
+        }
+
+        function generateAutoId() {
+            const id = members.length > 0 ? Math.max(...members.map(m => m.id)) + 1 : 1001;
+            document.getElementById('auto-id-display').innerText = `ID: ${id}`;
+            return id;
+        }
+
+        // --- DATA SYNC & LISTENER (Firestore) ---
+
+        function setupFirebaseListener() {
+            db.collection("members").orderBy("id", "asc")
+            .onSnapshot((querySnapshot) => {
+                members = [];
+                querySnapshot.forEach((doc) => {
+                    members.push({ ...doc.data(), docId: doc.id });
+                });
+                
+                renderTable();
+                updateDashboardStats();
+                generateAutoId();
+                setLoader(false);
+                
+                const syncIndicator = document.getElementById('sync-status-indicator');
+                syncIndicator.innerHTML = '<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span> Imesawazishwa';
+                syncIndicator.className = "flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-bold mt-2 bg-emerald-50 dark:bg-emerald-950 p-2 rounded-lg";
+            }, (error) => {
+                console.error("Firestore error:", error);
+                showToast("Imeshindwa kupakia data.", "error");
+                setLoader(false);
             });
         }
 
-        // Kazi ya Kihariri (Edit Record)
-        window.editRecord = function(id) {
-            const record = globalRecords.find(r => r.id === id);
-            if (!record) return;
+        // --- MEMBER MANAGEMENT (Firestore Write) ---
 
-            document.getElementById('regName').value = record.name;
-            document.getElementById('regPhone').value = record.phone;
-            document.getElementById('regCategory').value = record.category;
-            document.getElementById('regGender').value = record.gender;
+        function saveMember(e) {
+            e.preventDefault();
+            const mode = document.getElementById('form-mode').value;
+            const docId = document.getElementById('edit-id').value; 
+            const name = document.getElementById('m-name').value.trim();
+            const gender = document.getElementById('m-gender').value;
+            const phone = document.getElementById('m-phone').value.trim();
+            const dept = document.getElementById('m-dept').value;
+            const status = document.getElementById('m-status').value;
 
-            editingId = id;
-            submitBtn.innerText = "Sasisha Taarifa";
-
-            // Nenda kwenye ukurasa wa usajili ili kuona fomu
-            navLinks.forEach(l => l.classList.remove('active'));
-            viewSections.forEach(v => v.classList.remove('active-view'));
-            
-            document.querySelector('[data-target="registration-view"]').classList.add('active');
-            document.getElementById('registration-view').classList.add('active-view');
-        }
-
-        // Futa kumbukumbu 
-        window.deleteRecord = async function(id) {
-            if(confirm("Una uhakika unataka kufuta taarifa hii kwenye mtandao?")) {
-                try {
-                    await deleteDoc(doc(db, "school_registry", id));
-                    alert("Imefutwa kwa mafanikio.");
-                } catch(err) {
-                    alert("Imeshindikana kufuta: " + err.message);
-                }
-            }
-        }
-
-        // 6. BULK SMS FILTER LOGIC
-        const smsMessage = document.getElementById('smsMessage');
-        const charCount = document.getElementById('charCount');
-        
-        smsMessage.addEventListener('input', () => {
-            let len = smsMessage.value.length;
-            charCount.innerText = len;
-            if(len > 160) charCount.style.color = "red";
-            else charCount.style.color = "var(--primary-blue)";
-        });
-
-        document.getElementById('sendSmsBtn').addEventListener('click', () => {
-            const msg = encodeURIComponent(smsMessage.value);
-            const target = document.getElementById('smsTarget').value;
-            
-            if(!msg || msg.trim() === "") { 
-                alert("Tafadhali andika ujumbe kwanza."); return; 
-            }
-
-            // Kuchuja namba kulingana na kundi lililochaguliwa
-            let filteredNumbers = [];
-            
-            if(target === "all") {
-                filteredNumbers = globalRecords.map(r => r.phone);
-            } else if(target === "walimu") {
-                filteredNumbers = globalRecords.filter(r => r.category === "Mwalimu").map(r => r.phone);
-            } else if(target === "kamati") {
-                filteredNumbers = globalRecords.filter(r => r.category === "Mwanakamati").map(r => r.phone);
-            } else {
-                // Makundi mengine yote na madarasa
-                filteredNumbers = globalRecords.filter(r => r.category === target).map(r => r.phone);
-            }
-
-            if(filteredNumbers.length === 0) {
-                alert("Hakuna namba zilizopatikana kwenye kundi hili zilizosajiliwa.");
+            if(!name || !gender || !phone || !dept) {
+                showToast("Tafadhali jaza nyanja zote muhimu (*)", "error");
                 return;
             }
 
-            let phoneString = filteredNumbers.join(",");
-            alert(`Namba ${filteredNumbers.length} zimechujwa kutoka Firebase kwa ajili ya kundi la: [${target}]`);
+            const memberData = {
+                name, gender, phone, dept, status,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            setLoader(true, mode === 'edit' ? "Inasasisha..." : "Inasajili...");
+
+            if (mode === 'edit' && docId) {
+                db.collection("members").doc(docId).update(memberData)
+                    .then(() => {
+                        showToast(`Taarifa za ${name} zimesasishwa.`, "success");
+                        resetForm();
+                    })
+                    .catch((error) => {
+                        showToast("Imeshindwa kusasisha.", "error");
+                    })
+                    .finally(() => setLoader(false));
+            } else {
+                const newId = members.length > 0 ? Math.max(...members.map(m => m.id)) + 1 : 1001;
+                db.collection("members").add({
+                    id: newId,
+                    ...memberData,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                })
+                    .then(() => {
+                        showToast(`${name} amesajiliwa kikamilifu.`, "success");
+                        resetForm();
+                    })
+                    .catch((error) => {
+                        showToast("Imeshindwa kusajili.", "error");
+                    })
+                    .finally(() => setLoader(false));
+            }
+        }
+
+        function editMember(docId) {
+            const m = members.find(item => item.docId === docId);
+            if (!m) return;
             
-            const smsUrl = `sms:${phoneString}?body=${msg}`;
-            window.location.href = smsUrl;
-        });
+            document.getElementById('form-mode').value = 'edit';
+            document.getElementById('edit-id').value = m.docId; 
+            document.getElementById('m-name').value = m.name;
+            document.getElementById('m-gender').value = m.gender;
+            document.getElementById('m-phone').value = m.phone;
+            document.getElementById('m-dept').value = m.dept;
+            document.getElementById('m-status').value = m.status;
+            
+            document.getElementById('form-title').innerHTML = `<i class="fas fa-edit text-primary"></i> Hariri ${m.name}`;
+            document.getElementById('btn-submit-form').innerHTML = `<i class="fas fa-save"></i> Sasisha`;
+            document.getElementById('auto-id-display').innerText = `ID: ${m.id} (Inahariri)`;
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('member-form').reset();
+            document.getElementById('form-mode').value = 'create';
+            document.getElementById('edit-id').value = '';
+            document.getElementById('form-title').innerHTML = `<i class="fas fa-user-plus text-primary"></i> Sajili Mtu Mpya`;
+            document.getElementById('btn-submit-form').innerHTML = `<i class="fas fa-save"></i> Hifadhi`;
+            generateAutoId();
+        }
+
+        function renderTable(data = members) {
+            const tBody = document.getElementById('members-table-body');
+            tBody.innerHTML = '';
+            
+            document.getElementById('table-count-display').innerText = `Jumla: ${data.length}`;
+
+            if(data.length === 0) {
+                tBody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-gray-500"><i class="fas fa-users-slash text-4xl mb-3 block"></i> Hakuna rekodi zilizopatikana.</td></tr>`;
+                return;
+            }
+
+            data.forEach(m => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 dark:hover:bg-gray-800/50 transition duration-150";
+                
+                const genderClass = m.gender === 'Me' ? 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300' : 'bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300';
+                const statusClass = m.status === 'Active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+
+                tr.innerHTML = `
+                    <td class="px-5 py-3 font-mono text-xs font-semibold text-gray-500">${m.id}</td>
+                    <td class="px-5 py-3 font-medium text-gray-900 dark:text-white">${m.name}</td>
+                    <td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${genderClass}">${m.gender}</span></td>
+                    <td class="px-5 py-3 font-mono text-sm tracking-tight text-gray-700 dark:text-gray-300">${m.phone}</td>
+                    <td class="px-5 py-3 text-xs text-gray-600 dark:text-gray-400 font-medium">${m.dept}</td>
+                    <td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${statusClass}">${m.status}</span></td>
+                    <td class="px-5 py-3 text-center space-x-1.5 flex items-center justify-center">
+                        <button onclick="editMember('${m.docId}')" title="Hariri" class="w-8 h-8 rounded-full text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 transition flex items-center justify-center border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900"><i class="fas fa-edit text-xs"></i></button>
+                        <button onclick="smsSingleMember('${m.phone}')" title="Tuma SMS" class="w-8 h-8 rounded-full text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition flex items-center justify-center border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900"><i class="fas fa-sms text-xs"></i></button>
+                        <button onclick="callMember('${m.phone}')" title="Piga Simu" class="w-8 h-8 rounded-full text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 transition flex items-center justify-center border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900"><i class="fas fa-phone text-xs"></i></button>
+                        <button onclick="deleteMember('${m.docId}', '${m.name}')" title="Futa" class="w-8 h-8 rounded-full text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 transition flex items-center justify-center border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900"><i class="fas fa-trash-alt text-xs"></i></button>
+                    </td>
+                `;
+                tBody.appendChild(tr);
+            });
+        }
+
+        function deleteMember(docId, name) {
+            if (confirm(`Je, una uhakika unataka kufuta rekodi ya "${name}" kwenye mfumo?`)) {
+                setLoader(true, "Inafuta...");
+                db.collection("members").doc(docId).delete()
+                    .then(() => {
+                        showToast(`"${name}" amefutwa kwenye orodha.`, "info");
+                    })
+                    .catch((error) => {
+                        showToast("Imeshindwa kufuta.", "error");
+                    })
+                    .finally(() => setLoader(false));
+            }
+        }
+
+        // --- SEARCH LOGIC ---
+        function globalSearch(query) {
+            query = query.trim().toLowerCase();
+            if(!query) {
+                renderTable(members);
+                return;
+            }
+            const filtered = members.filter(m => 
+                m.name.toLowerCase().includes(query) ||
+                m.phone.includes(query) ||
+                m.id.toString().includes(query) ||
+                m.dept.toLowerCase().includes(query)
+            );
+            renderTable(filtered);
+            if(query.length > 2) {
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+                document.getElementById('tab-washirika').classList.remove('hidden');
+            }
+        }
+
+        // --- SMS & CALL LOGIC ---
+
+        function callMember(phone) {
+            window.location.href = `tel:${phone}`;
+        }
+
+        function smsSingleMember(phone) {
+            const msg = prompt("Andika ujumbe mfupi (SMS):", "Habari...");
+            if (msg) {
+                window.location.href = `sms:${phone}?body=${encodeURIComponent(msg)}`;
+            }
+        }
+
+        function applySmsTemplate(val) {
+            if(val) {
+                document.getElementById('sms-message').value = val;
+            }
+        }
+
+        function updateSmsRecipientCount() {
+            const deptGroup = document.getElementById('sms-filter-group').value;
+            let count = 0;
+            
+            if(deptGroup === 'all') {
+                count = members.length;
+            } else {
+                count = members.filter(m => m.dept === deptGroup).length;
+            }
+            
+            const countEl = document.getElementById('sms-recipient-count');
+            let start = 0;
+            const end = count;
+            if(end === 0) { countEl.innerText = 0; return;}
+            const duration = 500;
+            const increment = end / (duration / 16);
+            
+            const timer = setInterval(() => {
+                start += increment;
+                if(start >= end) {
+                    countEl.innerText = end;
+                    clearInterval(timer);
+                } else {
+                    countEl.innerText = Math.floor(start);
+                }
+            }, 16);
+        }
+
+        function triggerFilteredBulkSms() {
+            const msg = document.getElementById('sms-message').value.trim();
+            const deptGroup = document.getElementById('sms-filter-group').value;
+            
+            if(!msg) { showToast("Andika ujumbe kwanza!", "error"); return; }
+            
+            let targetMembers = [];
+            if(deptGroup === 'all') {
+                targetMembers = members;
+            } else {
+                targetMembers = members.filter(m => m.dept === deptGroup);
+            }
+
+            if(targetMembers.length === 0) {
+                showToast("Hakuna watu kwenye kundi hili!", "error");
+                return;
+            }
+
+            const phones = targetMembers
+                .filter(m => m.status === 'Active')
+                .map(m => m.phone)
+                .join(',');
+
+            if(!phones) {
+                showToast("Hakuna namba 'Active' kwenye kundi hili!", "error");
+                return;
+            }
+
+            window.location.href = `sms:${phones}?body=${encodeURIComponent(msg)}`;
+            showToast("Ujumbe umetumwa kwenda app ya SMS.", "success");
+        }
+
+        // --- DASHBOARD & CHARTS LOGIC ---
+
+        function updateDashboardStats() {
+            const total = members.length;
+            const me = members.filter(m => m.gender === 'Me').length;
+            const ke = members.filter(m => m.gender === 'Ke').length;
+
+            animateValue('stat-total', total);
+            animateValue('stat-me', me);
+            animateValue('stat-ke', ke);
+
+            const mePct = total > 0 ? Math.round((me / total) * 100) : 0;
+            const kePct = total > 0 ? Math.round((ke / total) * 100) : 0;
+            document.getElementById('pct-me').innerText = `${mePct}% ya wote`;
+            document.getElementById('pct-ke').innerText = `${kePct}% ya wote`;
+
+            if (gChart && dChart) {
+                gChart.data.datasets[0].data = [me, ke];
+                gChart.update();
+
+                const deptMap = {
+                    'Staff Member': 0, 
+                    'Wajumbe wa Kamati ya Shule': 0, 
+                    'Wazazi Darasa la Kwanza': 0,
+                    'Darasa la Pili': 0, 
+                    'Darasa la Tatu': 0, 
+                    'Darasa la Nne': 0,
+                    'Darasa la Tano': 0, 
+                    'Darasa la Sita': 0, 
+                    'Darasa la Saba': 0
+                };
+                
+                members.forEach(m => {
+                    if (deptMap.hasOwnProperty(m.dept)) {
+                        deptMap[m.dept]++;
+                    }
+                });
+                
+                dChart.data.datasets[0].data = Object.values(deptMap);
+                dChart.update();
+            }
+        }
+        
+        function animateValue(id, endValue) {
+            const obj = document.getElementById(id);
+            if(!obj) return;
+            let startValue = 0;
+            const duration = 1000;
+            if(endValue === 0) { obj.innerText = "0"; return; }
+            if(endValue === parseInt(obj.innerText)) return; 
+
+            const increment = endValue / (duration / 16);
+            const timer = setInterval(() => {
+                startValue += increment;
+                if(startValue >= endValue) {
+                    obj.innerText = endValue;
+                    clearInterval(timer);
+                } else {
+                    obj.innerText = Math.floor(startValue);
+                }
+            }, 16);
+        }
+
+        function initCharts() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
+            const gridColor = isDark ? '#1f2937' : '#f3f4f6';
+
+            Chart.defaults.color = textColor;
+            Chart.defaults.font.family = "'Poppins', sans-serif";
+
+            // Gender Chart
+            if(gChart) gChart.destroy();
+            const ctxGender = document.getElementById('genderChart').getContext('2d');
+            gChart = new Chart(ctxGender, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Wanaume (Me)', 'Wanawake (Ke)'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#0284c7', '#db2777'],
+                        borderWidth: isDark ? 4 : 2,
+                        borderColor: isDark ? '#111827' : '#ffffff',
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } },
+                        tooltip: { backgroundColor: isDark ? '#1f2937' : '#111827', padding: 12 }
+                    },
+                    cutout: '70%'
+                }
+            });
+
+            // Department Chart
+            if(dChart) dChart.destroy();
+            const ctxDept = document.getElementById('deptChart').getContext('2d');
+            dChart = new Chart(ctxDept, {
+                type: 'bar',
+                data: {
+                    labels: ['Staff', 'Kamati', 'Drs 1', 'Drs 2', 'Drs 3', 'Drs 4', 'Drs 5', 'Drs 6', 'Drs 7'],
+                    datasets: [{
+                        label: 'Idadi',
+                        data: [0,0,0,0,0,0,0,0,0],
+                        backgroundColor: isDark ? '#ca8a04' : '#166534',
+                        borderRadius: 8,
+                        hoverBackgroundColor: isDark ? '#fde047' : '#15803d'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: isDark ? '#1f2937' : '#111827', padding: 12 }
+                    }
+                }
+            });
+        }
+
+        // --- BACKUP & UTILS ---
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            let baseClasses = "flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl border text-sm font-semibold max-w-md animate-slideInRight";
+            if (type === 'success') {
+                baseClasses += " bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200";
+            } else if (type === 'error') {
+                baseClasses += " bg-rose-50 dark:bg-rose-950 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200";
+            } else {
+                baseClasses += " bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200";
+            }
+            
+            const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle');
+            
+            toast.className = baseClasses;
+            toast.innerHTML = `<i class="fas ${icon} text-lg"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('animate-fadeOut');
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        }
+
+        function backupDatabase() {
+            if(members.length === 0) { showToast("Hakuna data ya ku-export.", "error"); return;}
+            const cleanData = members.map(({docId, ...rest}) => rest);
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cleanData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            const date = new Date().toISOString().slice(0,10);
+            downloadAnchorNode.setAttribute("download", `kishamapanda_sms_backup_${date}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            showToast("Backup imepakuliwa vyema.", "success");
+        }
+
+        function clearAllDataDatabase() {
+            if (members.length === 0) return;
+
+            if (confirm("ONYO KUU! Je, una uhakika unataka KUFUTA KABISA data zote kwenye mfumo?")) {
+                setLoader(true, "Inafuta data zote...");
+                
+                const batch = db.batch();
+                const limitedMembers = members.slice(0, 499); 
+                limitedMembers.forEach(m => {
+                    const ref = db.collection("members").doc(m.docId);
+                    batch.delete(ref);
+                });
+                
+                batch.commit()
+                .then(() => {
+                    showToast("Data zote zimefutwa kikamilifu.", "info");
+                    switchTab('dashboard');
+                })
+                .catch((error) => {
+                    showToast("Hitilafu kwenye kufuta.", "error");
+                })
+                .finally(() => setLoader(false));
+            }
+        }
     </script>
+    
+    <style>
+        /* Custom Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out; }
+        
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .animate-slideInRight { animation: slideInRight 0.3s ease-out; }
+        
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        .animate-fadeOut { animation: fadeOut 0.5s ease-in forwards; }
+    </style>
 </body>
 </html>
